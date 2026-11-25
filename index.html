@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MR-Eval dashboard</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #ffffff; --panel-alt: #f6f7f9; --border: #e3e6eb; --border-strong: #c8ccd3;
+    --text: #1a1d23; --muted: #6b7280; --accent: #2563eb; --skel: #e5e7eb; --skel-2: #eef0f3;
+    --scrim: rgba(246,247,249,.55); --card: #ffffff; --shadow: 0 20px 50px rgba(15,23,42,.18);
+    --pro-bg: #eef4ff; --toast-bg: #fffbeb; --toast-bd: #fcd34d; --toast-tx: #92400e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115; --panel: #161920; --panel-alt: #1b1f27; --border: #2a2f3a; --border-strong: #3a404c;
+      --text: #e6e8ec; --muted: #9aa3b2; --accent: #60a5fa; --skel: #262b35; --skel-2: #1f242d;
+      --scrim: rgba(15,17,21,.6); --card: #171a21; --shadow: 0 20px 50px rgba(0,0,0,.55);
+      --pro-bg: #172338; --toast-bg: #2a2110; --toast-bd: #8a6a1c; --toast-tx: #fcd34d;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow: hidden; height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 16px 20px 24px; font-size: 15px; line-height: 1.35; }
+  header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header .gen { color: var(--muted); font-size: 12px; }
+  nav { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  nav span { color: var(--muted); padding: 9px 14px; font-size: 14px; border-bottom: 2px solid transparent; }
+  nav span.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+  .behind { filter: blur(3px) grayscale(.6); opacity: .75; pointer-events: none; user-select: none; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .bar { height: 12px; border-radius: 4px; background: var(--skel); margin: 9px 0; animation: pulse 1.6s ease-in-out infinite; }
+  .row { display: grid; grid-template-columns: 1.6fr repeat(5, 1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .row:nth-child(even) { background: var(--panel-alt); }
+  .row .bar { margin: 4px 0; }
+  .h2 { width: 160px; height: 14px; }
+  .chart { height: 180px; border-radius: 6px; background: linear-gradient(180deg, var(--skel-2), var(--skel)); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  @media (max-width: 640px) {
+    body { padding: 12px 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1.4fr repeat(3, 1fr); }
+    .row .bar:nth-child(n+5) { display: none; }
+  }
+
+  .scrim { position: fixed; inset: 0; background: var(--scrim); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 640px; padding: 22px 22px 18px; margin: auto; }
+  .lock { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); background: var(--pro-bg); padding: 3px 8px; border-radius: 999px; }
+  .modal h2 { font-size: 19px; margin: 10px 0 6px; }
+  .modal p.lead { color: var(--muted); margin: 0 0 16px; }
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .plan { border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--panel-alt); }
+  .plan.pro { border: 2px solid var(--accent); background: var(--pro-bg); position: relative; }
+  .plan.pro::before { content: "Most popular"; position: absolute; top: -10px; left: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 999px; }
+  .plan .name { font-weight: 600; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .plan .price { font-size: 22px; font-weight: 700; margin: 4px 0 2px; }
+  .plan .price small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .plan .feat { font-size: 13px; color: var(--muted); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { flex: 1 1 180px; font: inherit; font-size: 14px; font-weight: 600; padding: 10px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-strong); background: var(--panel); color: var(--text); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { filter: brightness(1.06); }
+  .toast { display: none; margin-top: 14px; padding: 10px 12px; border-radius: 8px; font-size: 14px; background: var(--toast-bg); border: 1px solid var(--toast-bd); color: var(--toast-tx); }
+  .toast.show { display: block; }
+  .fine { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
+  @media (max-width: 560px) {
+    .plans { grid-template-columns: 1fr; }
+    .plan.pro::before { left: auto; right: 12px; }
+    .modal { padding: 18px 16px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="behind" aria-hidden="true">
+  <header><h1>MR-Eval dashboard</h1><span class="gen">generated …</span></header>
+  <nav><span class="active">Overview</span><span>Safety</span><span>Capabilities</span><span>Dynamics</span><span>Judges</span></nav>
+  <div class="grid">
+    <div class="panel">
+      <div class="bar h2"></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+      <div class="row"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+    </div>
+    <div class="panel"><div class="bar h2"></div><div class="chart"></div><div class="bar" style="width:70%"></div><div class="bar" style="width:45%"></div></div>
+  </div>
+  <div class="panel"><div class="bar h2"></div><div class="chart"></div></div>
+</div>
+
+<div class="scrim" role="dialog" aria-modal="true" aria-labelledby="pw-title">
+  <div class="modal">
+    <span class="lock">&#128274; MR-Eval Pro</span>
+    <h2 id="pw-title">Authorize with your subscription to continue</h2>
+    <p class="lead">MR-Eval evals are available only with MR-Eval Pro, 50&nbsp;CHF&nbsp;/&nbsp;month.</p>
+    <div class="plans">
+      <div class="plan"><div class="name">Free</div><div class="price">0 CHF</div><div class="feat">0 evals</div></div>
+      <div class="plan pro"><div class="name">Pro</div><div class="price">50 CHF <small>/ mo</small></div><div class="feat">All the evals, judge &kappa; included</div></div>
+      <div class="plan"><div class="name">Enterprise</div><div class="price">Custom</div><div class="feat">Contact Viktor</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="button" data-joke>Subscribe</button>
+      <button class="btn" type="button" data-joke>Log in with subscription</button>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="fine">Prices exclude VAT, GPU hours and emotional damage. Cancel anytime (there is nothing to cancel).</div>
+  </div>
+</div>
+
+<script>
+  var jokes = [
+    "Payment processing is currently being evaluated by our LLM judge. Please try again never.",
+    "Our LLM judge rated your subscription request 2/10 (refusal). Inter-judge κ: 0.0.",
+    "Checkout is still in the eval queue, behind 3 pending Slurm jobs. Estimated start: never.",
+    "Subscription service returned HTTP 402 (Payment Required) and HTTP 418 (I'm a teapot)."
+  ];
+  var i = 0, toast = document.getElementById("toast");
+  document.querySelectorAll("[data-joke]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      toast.textContent = jokes[i % jokes.length]; i++;
+      toast.classList.add("show");
+    });
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") e.preventDefault(); });
+</script>
+</body>
+</html>
