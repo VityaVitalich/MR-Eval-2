@@ -103,29 +103,11 @@
       <div class="plan pro"><div class="name">Pro</div><div class="price">50 CHF <small>/ mo</small></div><div class="feat">All the evals, judge &kappa; included</div></div>
       <div class="plan"><div class="name">Enterprise</div><div class="price">Custom</div><div class="feat">Contact Viktor</div></div>
     </div>
-    <div class="actions">
-      <button class="btn primary" type="button" data-joke>Subscribe</button>
-      <button class="btn" type="button" data-joke>Log in with subscription</button>
-    </div>
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="fine">Prices exclude VAT, GPU hours and emotional damage. Cancel anytime (there is nothing to cancel).</div>
   </div>
 </div>
 
 <script>
-  var jokes = [
-    "Payment processing is currently being evaluated by our LLM judge. Please try again never.",
-    "Our LLM judge rated your subscription request 2/10 (refusal). Inter-judge κ: 0.0.",
-    "Checkout is still in the eval queue, behind 3 pending Slurm jobs. Estimated start: never.",
-    "Subscription service returned HTTP 402 (Payment Required) and HTTP 418 (I'm a teapot)."
-  ];
-  var i = 0, toast = document.getElementById("toast");
-  document.querySelectorAll("[data-joke]").forEach(function (b) {
-    b.addEventListener("click", function () {
-      toast.textContent = jokes[i % jokes.length]; i++;
-      toast.classList.add("show");
-    });
-  });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") e.preventDefault(); });
 </script>
 </body>
